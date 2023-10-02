@@ -10,6 +10,7 @@ boto3 = "*"
 pyjwt = "*"
 python-dotenv = "*"
 djangorestframework = "*"
+pre-commit = "*"
 
 [dev-packages]
 
