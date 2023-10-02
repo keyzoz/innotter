@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "page.apps.PageConfig",
     "post.apps.PostConfig",
+    "rest_framework",
 ]
 
 MIDDLEWARE = [
