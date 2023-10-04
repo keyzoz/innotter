@@ -5,7 +5,7 @@ class Likes(models.Model):
     post_id = models.ForeignKey(
         "post.Post", on_delete=models.CASCADE, related_name="liked_post"
     )
-    user_id = models.IntegerField()
+    user = models.CharField()
 
 
 class Post(models.Model):
