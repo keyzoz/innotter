@@ -32,4 +32,15 @@ class PageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Page
-        fields = ("name", "description", "tags", "user", "image_url", "followers")
+        fields = ("name", "description", "user", "image_url", "tags", "followers")
+
+
+class PagePatchSerializer(serializers.ModelSerializer):
+    name = serializers.CharField()
+    description = serializers.CharField()
+    image_url = serializers.URLField()
+    tags = serializers.PrimaryKeyRelatedField(many=True, queryset=Tag.objects.all())
+
+    class Meta:
+        model = Page
+        fields = ("name", "description", "image_url", "tags")
