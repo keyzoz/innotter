@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Page, Tag
+from .models import Followers, Page, Tag
 
 
 class TagSerializer(serializers.ModelSerializer):

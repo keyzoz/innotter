@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from .auth import get_username_from_token
-from .models import Page
+from .models import Followers, Page
 from .serializers import (CreatePageSerializer, PagePatchSerializer,
                           TagSerializer)
 
@@ -68,3 +68,49 @@ def patch_page(request, page_id):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+def follow_page(request, page_id):
+    data = get_username_from_token(request)
+    try:
+        username = data["username"]
+        Followers.objects.get(page_id_id=page_id, user=username)
+    except KeyError:
+        return Response(data["error"], status=status.HTTP_401_UNAUTHORIZED)
+    except Followers.DoesNotExist:
+        try:
+            follow = Followers(page_id_id=page_id, user=username)
+            follow.save()
+            Page.objects.get(id=page_id).followers.add(follow)
+        except Exception as err:
+            return Response(
+                {"error": str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        return Response({"message": "Followed"}, status=status.HTTP_201_CREATED)
+    return Response(
+        {"error": "You're already followed on this page"},
+        status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+    )
+
+
+@api_view(["POST"])
+def unfollow_page(request, page_id):
+    data = get_username_from_token(request)
+    try:
+        username = data["username"]
+        follow = Followers.objects.get(page_id_id=page_id, user=username)
+    except KeyError:
+        return Response(data["error"], status=status.HTTP_401_UNAUTHORIZED)
+    except Followers.DoesNotExist:
+        return Response(
+            {"error": "You're not follower of this page"},
+            status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        )
+    try:
+        follow.delete()
+    except Exception as err:
+        return Response(
+            {"error": str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    return Response({"message": "Unfollowed"}, status=status.HTTP_201_CREATED)
