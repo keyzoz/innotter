@@ -1,12 +1,16 @@
+from django.core.paginator import EmptyPage, Paginator
 from django.db import IntegrityError
+from post.models import Post
+from post.serializers import PostSerializer
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .auth import get_username_from_token
 from .models import Followers, Page
 from .serializers import (CreatePageSerializer, PagePatchSerializer,
-                          TagSerializer)
+                          PageSerializer, TagSerializer)
 
 
 @api_view(["POST"])
@@ -47,27 +51,61 @@ def create_tag(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(["PATCH"])
-def patch_page(request, page_id):
-    data = get_username_from_token(request)
-    try:
-        username = data["username"]
-        page = Page.objects.get(id=page_id)
-        if page.user != username:
+class PageDetailView(APIView):
+    @staticmethod
+    def get(request, page_id):
+        try:
+            data = get_username_from_token(request)
+            page = Page.objects.get(id=page_id)
+        except KeyError:
+            return Response(data["error"], status=status.HTTP_401_UNAUTHORIZED)
+        except Page.DoesNotExist:
             return Response(
-                {"error": "You're not a owner of this page"}, status.HTTP_403_FORBIDDEN
+                {"error": "Page not found"}, status=status.HTTP_404_NOT_FOUND
             )
-    except KeyError:
-        return Response(data["error"], status=status.HTTP_401_UNAUTHORIZED)
-    except Page.DoesNotExist:
-        return Response({"error": "Page not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    if request.method == "PATCH":
-        serializer = PagePatchSerializer(page, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        page_number = request.query_params.get("page", 1)
+        limit = request.query_params.get("limit", 30)
+
+        posts = Post.objects.filter(page=page, reply_to=None)
+        paginator = Paginator(posts, limit)
+
+        try:
+            page_posts = paginator.page(page_number)
+        except EmptyPage:
+            return Response({"error": "No more pages available"}, status=400)
+
+        serializer = PageSerializer(page)
+        serializer_data = serializer.data
+
+        serializer_data["posts"] = PostSerializer(page_posts, many=True).data
+
+        return Response(serializer_data)
+
+    @staticmethod
+    def patch(request, page_id):
+        data = get_username_from_token(request)
+        try:
+            username = data["username"]
+            page = Page.objects.get(id=page_id)
+            if page.user != username:
+                return Response(
+                    {"error": "You're not a owner of this page"},
+                    status.HTTP_403_FORBIDDEN,
+                )
+        except KeyError:
+            return Response(data["error"], status=status.HTTP_401_UNAUTHORIZED)
+        except Page.DoesNotExist:
+            return Response(
+                {"error": "Page not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        if request.method == "PATCH":
+            serializer = PagePatchSerializer(page, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
@@ -113,4 +151,4 @@ def unfollow_page(request, page_id):
         return Response(
             {"error": str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-    return Response({"message": "Unfollowed"}, status=status.HTTP_201_CREATED)
+    return Response({"message": "Unfollowed"}, status=status.HTTP_200_OK)
