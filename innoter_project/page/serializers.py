@@ -25,14 +25,10 @@ class CreatePageSerializer(serializers.ModelSerializer):
         fields = ("name", "description", "image_url", "tags", "user")
 
 
-class PageDetailSerializer(serializers.ModelSerializer):
+class PageSerializer(serializers.ModelSerializer):
 
-    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    user = serializers.CharField(read_only=True)
     description = serializers.CharField()
-    tags = serializers.SlugRelatedField(many=True, read_only=True, slug_field="tags")
-    followers = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="username"
-    )
 
     class Meta:
         model = Page

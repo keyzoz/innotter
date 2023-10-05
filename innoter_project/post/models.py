@@ -21,7 +21,7 @@ class Post(models.Model):
         "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="replies"
     )
 
-    likes = models.ManyToManyField(Likes, blank=True, related_name="likes")
+    likes = models.ManyToManyField(Likes, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -1,8 +1,10 @@
+from django.core.paginator import Paginator
 from django.db import IntegrityError
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from .auth import get_username_from_token
+from .models import Page
 from .serializers import CreatePageSerializer, TagSerializer
 
 
@@ -32,6 +34,9 @@ def create_tag(request):
         return Response(data["error"], status=401)
     serializer = TagSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=201)
+        try:
+            serializer.save()
+            return Response(serializer.data, status=201)
+        except IntegrityError:
+            return Response("Inaccurate data inputs", status=412)
     return Response(serializer.errors, status=400)

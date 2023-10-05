@@ -162,6 +162,7 @@ nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
+Pipfile.lock
 
 # Translations
 *.mo
