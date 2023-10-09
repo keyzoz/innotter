@@ -1,26 +1,33 @@
 from rest_framework import serializers
 
-from .models import Page, Tag
+from .models import Followers, Page, Tag
 
 
-class PageListSerializer(serializers.ModelSerializer):
+class PageSerializer(serializers.ModelSerializer):
 
-    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
-
-    class Meta:
-        model = Page
-        fields = ("id", "name", "user", "is_blocked")
-
-
-class PageDetailSerializer(serializers.ModelSerializer):
-
-    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
-    description = serializers.CharField()
-    tags = serializers.SlugRelatedField(many=True, read_only=True)
-    followers = serializers.SlugRelatedField(
-        many=True, read_only=True, slug_field="username"
-    )
+    user = serializers.CharField(read_only=True)
 
     class Meta:
         model = Page
-        fields = ("name", "description", "tags", "user", "image_url", "followers")
+        fields = "__all__"
+        extra_fields = {
+            "tags": {"required": False},
+            "followers": {"read_only": True},
+            "image_url": {"required": False},
+            "is_blocked": {"read_only": True},
+            "unblock_date": {"read_only": True},
+            "created_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+
+
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = "__all__"
+
+
+class FollowersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Followers
+        fields = "__all__"
