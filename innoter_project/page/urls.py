@@ -1,11 +1,10 @@
-from django.urls import path
+from django.urls import include, path
+from rest_framework import routers
 
 from . import views
 
-urlpatterns = [
-    path("v1/pages", views.create_page, name="create_page"),
-    path("v1/tag", views.create_tag, name="create_tag"),
-    path("v1/page/<int:page_id>", views.PageDetailView.as_view(), name="page_detail"),
-    path("v1/page/<int:page_id>/follow", views.follow_page, name="follow_page"),
-    path("v1/page/<int:page_id>/unfollow", views.unfollow_page, name="unfollow_page"),
-]
+router = routers.DefaultRouter()
+router.register("pages", views.PageViewSet, basename="pages")
+
+
+urlpatterns = [path("", include(router.urls))]
