@@ -1,52 +1,30 @@
-from django.core.paginator import EmptyPage, Paginator
 from django.db import IntegrityError
-from page.auth import get_username_from_token
+from page.auth import CustomAuthentication
 from page.models import Followers, Page
-from page.serializers import PageSerializer
-from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework import mixins, status
+from rest_framework.decorators import api_view, authentication_classes
 from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet
 
 from .models import Post
-from .serializers import CreatePostSerializer, PostSerializer
+from .serializers import PostSerializer
 
 
 @api_view(["GET"])
+@authentication_classes([CustomAuthentication])
 def get_feed(request):
-    try:
-        data = get_username_from_token(request)
-        username = data["username"]
-    except KeyError:
-        return Response(data["error"], status=status.HTTP_401_UNAUTHORIZED)
-    except Page.DoesNotExist:
-        return Response({"error": "Page not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    followed_pages = Followers.objects.filter(user=username).values_list(
+    followed_pages = Followers.objects.filter(user=request.user).values_list(
         "page_id", flat=True
     )
     posts = Post.objects.filter(page_id__in=followed_pages)
 
     serializer = PostSerializer(posts, many=True)
     serializer_data = serializer.data
+    print(request.user)
     return Response(serializer_data, status=status.HTTP_200_OK)
 
 
-@api_view(["POST"])
-def create_post(request, page_id):
-    try:
-        data = get_username_from_token(request)
-    except KeyError:
-        return Response(data["error"], status=status.HTTP_401_UNAUTHORIZED)
-    except Page.DoesNotExist:
-        return Response({"error": "Page not found"}, status=status.HTTP_404_NOT_FOUND)
-
-    serializer = CreatePostSerializer(data=request.data)
-    if serializer.is_valid():
-        try:
-            serializer.save(page_id=page_id)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        except IntegrityError:
-            return Response(
-                "Inaccurate data inputs", status=status.HTTP_422_UNPROCESSABLE_ENTITY
-            )
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class PostViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, GenericViewSet):
+    serializer_class = PostSerializer
+    queryset = Post.objects.all()
+    authentication_classes = [CustomAuthentication]

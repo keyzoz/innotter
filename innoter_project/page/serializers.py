@@ -30,4 +30,4 @@ class TagSerializer(serializers.ModelSerializer):
 class FollowersSerializer(serializers.ModelSerializer):
     class Meta:
         model = Followers
-        fields = "__all__"
+        fields = ("user",)
