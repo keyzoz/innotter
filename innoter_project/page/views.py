@@ -3,6 +3,7 @@ from datetime import timedelta
 from django.core.paginator import EmptyPage, Paginator
 from django.db import IntegrityError
 from django.utils import timezone
+from permissions import IsAdminOrModeratorOfOwnerGroup, IsOwnerOfPage
 from post.models import Post
 from post.serializers import PostSerializer
 from rest_framework import mixins, status, viewsets
@@ -20,8 +21,17 @@ class PageViewSet(viewsets.ModelViewSet):
     queryset = Page.objects.all()
     authentication_classes = [CustomAuthentication]
 
+    permission_classes_by_action = {
+        "partial_update": [IsOwnerOfPage],
+        "update": [IsOwnerOfPage],
+        "destroy": [IsAdminOrModeratorOfOwnerGroup],
+        "followers": [IsAdminOrModeratorOfOwnerGroup],
+        "block": [IsAdminOrModeratorOfOwnerGroup],
+        "post": [IsOwnerOfPage],
+    }
+
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        serializer.save(uuid=self.request.user)
 
     def retrieve(self, request, *args, **kwargs):
         page = self.get_object()
@@ -47,10 +57,10 @@ class PageViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["patch"])
     def follow(self, request, pk=None):
         try:
-            Followers.objects.get(page_id_id=pk, user=request.user)
+            Followers.objects.get(page_id_id=pk, uuid=request.user)
         except Followers.DoesNotExist:
             try:
-                follow = Followers(page_id_id=pk, user=request.user)
+                follow = Followers(page_id_id=pk, uuid=request.user)
                 follow.save()
                 Page.objects.get(id=pk).followers.add(follow)
             except Exception as err:
@@ -66,7 +76,7 @@ class PageViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["patch"])
     def unfollow(self, request, pk=None):
         try:
-            follow = Followers.objects.get(page_id_id=pk, user=request.user)
+            follow = Followers.objects.get(page_id_id=pk, uuid=request.user)
         except Page.DoesNotExist:
             return Response(
                 {"error": "Page not found"}, status=status.HTTP_404_NOT_FOUND
@@ -128,8 +138,17 @@ class PageViewSet(viewsets.ModelViewSet):
                 )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def get_permissions(self):
+        try:
+            return [
+                permission()
+                for permission in self.permission_classes_by_action[self.action]
+            ]
+        except KeyError:
+            return [permission() for permission in self.permission_classes]
 
-class TagView(mixins.CreateModelMixin, mixins.ListModelMixin, GenericViewSet):
+
+class TagView(mixins.CreateModelMixin, GenericViewSet):
     serializer_class = TagSerializer
     queryset = Tag.objects.all()
     authentication_classes = [CustomAuthentication]

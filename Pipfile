@@ -11,6 +11,9 @@ pyjwt = "*"
 python-dotenv = "*"
 djangorestframework = "*"
 pre-commit = "*"
+pytest = "*"
+requests = "*"
+urllib3 = "*"
 
 [dev-packages]
 

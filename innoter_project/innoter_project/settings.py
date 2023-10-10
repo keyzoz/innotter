@@ -89,7 +89,15 @@ DATABASES = {
         "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
         "HOST": os.getenv("POSTGRES_HOST"),
         "PORT": os.getenv("POSTGRES_PORT"),
-    }
+    },
+    "test": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": os.getenv("POSTGRES_TEST_NAME"),
+        "USER": os.getenv("POSTGRES_TEST_USER"),
+        "PASSWORD": os.getenv("POSTGRES_TEST_PASSWORD"),
+        "HOST": os.getenv("POSTGRES_TEST_HOST"),
+        "PORT": os.getenv("POSTGRES_TEST_PORT"),
+    },
 }
 
 
@@ -132,3 +140,5 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+USER_MANAG_URL = os.getenv("USER_MANAG_URL")

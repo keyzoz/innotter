@@ -1,3 +1,5 @@
+import uuid as uuid
+
 from django.db import models
 
 # Create your models here.
@@ -7,7 +9,7 @@ class Followers(models.Model):
     page_id = models.ForeignKey(
         "page.Page", on_delete=models.CASCADE, related_name="follow_page"
     )
-    user = models.CharField()
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False)
 
 
 class Tag(models.Model):
@@ -22,7 +24,7 @@ class Page(models.Model):
     name = models.CharField(max_length=128, unique=True)
     description = models.TextField()
     image_url = models.URLField(null=True, blank=True)
-    user = models.CharField()
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     tags = models.ManyToManyField(Tag, related_name="tags")
     followers = models.ManyToManyField(
         Followers,

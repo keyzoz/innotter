@@ -1,16 +1,18 @@
+import uuid
+
 import jwt
 from rest_framework import authentication
 from rest_framework.exceptions import AuthenticationFailed
 
 
-def get_username_from_token(request):
+def get_user_id_from_token(request):
     token = request.META.get("HTTP_AUTHORIZATION", "").split("Bearer ")[-1]
     try:
         decoded_token = jwt.decode(token, "secret_key", algorithms=["HS256"])
-        username = decoded_token.get("sub")
+        user_id = decoded_token.get("user_id")
         token_type = decoded_token.get("type")
         if token_type == "access":
-            return {"username": username}
+            return {"uuid": user_id}
         else:
             return {"error": "Token is not access"}
     except jwt.ExpiredSignatureError:
@@ -21,14 +23,14 @@ def get_username_from_token(request):
 
 class CustomAuthentication(authentication.BaseAuthentication):
     def authenticate(self, request):
-        data = get_username_from_token(request)
+        data = get_user_id_from_token(request)
 
         if data is None:
             return None
 
-        username = data.get("username")
+        uuid = data.get("uuid")
 
         if "error" in data:
             raise AuthenticationFailed(data["error"])
 
-        return (username, None)
+        return (uuid, None)

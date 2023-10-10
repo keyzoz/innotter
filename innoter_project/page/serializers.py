@@ -5,7 +5,7 @@ from .models import Followers, Page, Tag
 
 class PageSerializer(serializers.ModelSerializer):
 
-    user = serializers.CharField(read_only=True)
+    uuid = serializers.UUIDField(read_only=True)
 
     class Meta:
         model = Page
@@ -30,4 +30,4 @@ class TagSerializer(serializers.ModelSerializer):
 class FollowersSerializer(serializers.ModelSerializer):
     class Meta:
         model = Followers
-        fields = ("user",)
+        fields = ("uuid",)

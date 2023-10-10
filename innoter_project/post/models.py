@@ -1,3 +1,5 @@
+import uuid as uuid
+
 from django.db import models
 
 
@@ -5,7 +7,7 @@ class Likes(models.Model):
     post_id = models.ForeignKey(
         "post.Post", on_delete=models.CASCADE, related_name="liked_post"
     )
-    user = models.CharField()
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False)
 
 
 class Post(models.Model):
