@@ -1,4 +1,8 @@
+from datetime import timedelta
+
 from django.core.paginator import EmptyPage, Paginator
+from django.db import IntegrityError
+from django.utils import timezone
 from post.models import Post
 from post.serializers import PostSerializer
 from rest_framework import mixins, status, viewsets
@@ -20,12 +24,7 @@ class PageViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
     def retrieve(self, request, *args, **kwargs):
-        try:
-            page = Page.objects.get(id=kwargs.get("pk"))
-        except Page.DoesNotExist:
-            return Response(
-                {"error": "Page not found"}, status=status.HTTP_404_NOT_FOUND
-            )
+        page = self.get_object()
 
         page_number = request.query_params.get("page", 1)
         limit = request.query_params.get("limit", 30)
@@ -94,6 +93,40 @@ class PageViewSet(viewsets.ModelViewSet):
         if users:
             return Response(serializer.data)
         return Response({"detail": "The list of users is empty"})
+
+    @action(detail=True, methods=["patch"])
+    def block(self, request, pk=None):
+        page = self.get_object()
+        hours_to_block = request.data.get("hours_to_block")
+
+        try:
+            hours_to_block = int(hours_to_block)
+        except ValueError:
+            return Response(
+                {"error": "Invalid hours format"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        unblock_date = timezone.now() + timedelta(hours=hours_to_block)
+        page.is_blocked = True
+        page.unblock_date = unblock_date
+        page.save()
+        return Response(
+            {"message": "Page blocked successfully"}, status=status.HTTP_200_OK
+        )
+
+    @action(detail=True, methods=["post"])
+    def post(self, request, pk=None):
+        serializer = PostSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                serializer.save(page_id=pk)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            except IntegrityError:
+                return Response(
+                    "Inaccurate data inputs",
+                    status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TagView(mixins.CreateModelMixin, mixins.ListModelMixin, GenericViewSet):

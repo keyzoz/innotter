@@ -11,17 +11,15 @@ class LikesSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
-    likes = LikesSerializer(many=True, read_only=True)
+    page = serializers.CharField(read_only=True)
 
     class Meta:
         model = Post
         fields = "__all__"
-
-
-class CreatePostSerializer(serializers.ModelSerializer):
-    page = PageSerializer(read_only=True)
-    reply_to = serializers.PrimaryKeyRelatedField(queryset=Post.objects.all())
-
-    class Meta:
-        model = Post
-        fields = ("page", "content", "reply_to")
+        extra_fields = {
+            "page": {"read_only": True},
+            "reply_to": {"required": False},
+            "likes": {"required": False, "read_only": True},
+            "created_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
