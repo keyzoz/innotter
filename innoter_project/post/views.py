@@ -1,4 +1,3 @@
-from django.db import IntegrityError
 from page.auth import CustomAuthentication
 from page.models import Followers, Page
 from rest_framework import mixins, status
@@ -13,7 +12,7 @@ from .serializers import PostSerializer
 @api_view(["GET"])
 @authentication_classes([CustomAuthentication])
 def get_feed(request):
-    followed_pages = Followers.objects.filter(user=request.user).values_list(
+    followed_pages = Followers.objects.filter(uuid=request.user).values_list(
         "page_id", flat=True
     )
     posts = Post.objects.filter(page_id__in=followed_pages)
