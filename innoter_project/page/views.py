@@ -1,12 +1,14 @@
 from django.core.paginator import EmptyPage, Paginator
 from post.models import Post
 from post.serializers import PostSerializer
-from rest_framework import status, viewsets
+from rest_framework import mixins, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet
 
 from .auth import CustomAuthentication
-from .models import Page
-from .serializers import PageSerializer
+from .models import Followers, Page, Tag
+from .serializers import PageSerializer, TagSerializer
 
 
 class PageViewSet(viewsets.ModelViewSet):
@@ -42,3 +44,45 @@ class PageViewSet(viewsets.ModelViewSet):
         serializer_data["posts"] = PostSerializer(page_posts, many=True).data
 
         return Response(serializer_data)
+
+    @action(detail=True, methods=["patch"])
+    def follow(self, request, pk=None):
+        try:
+            Followers.objects.get(page_id_id=pk, user=request.user)
+        except Followers.DoesNotExist:
+            try:
+                follow = Followers(page_id_id=pk, user=request.user)
+                follow.save()
+                Page.objects.get(id=pk).followers.add(follow)
+            except Exception as err:
+                return Response(
+                    {"error": str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            return Response({"message": "Followed"}, status=status.HTTP_201_CREATED)
+        return Response(
+            {"error": "You're already followed on this page"},
+            status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        )
+
+    @action(detail=True, methods=["patch"])
+    def unfollow(self, request, pk=None):
+        try:
+            follow = Followers.objects.get(page_id_id=pk, user=request.user)
+        except Followers.DoesNotExist:
+            return Response(
+                {"error": "You're not follower of this page"},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+        try:
+            follow.delete()
+        except Exception as err:
+            return Response(
+                {"error": str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        return Response({"message": "Unfollowed"}, status=status.HTTP_201_CREATED)
+
+
+class TagView(mixins.CreateModelMixin, mixins.ListModelMixin, GenericViewSet):
+    serializer_class = TagSerializer
+    queryset = Tag.objects.all()
+    authentication_classes = [CustomAuthentication]
