@@ -4,8 +4,8 @@ from rest_framework import routers
 from . import views
 
 pages_router = routers.DefaultRouter()
-pages_router.register("pages", views.PageViewSet, basename="pages")
-pages_router.register("tags", views.TagView, basename="tags")
+pages_router.register("page", views.PageViewSet, basename="pages")
+pages_router.register("tag", views.TagView, basename="tags")
 
 
 urlpatterns = [path("", include(pages_router.urls))]

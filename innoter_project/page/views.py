@@ -8,7 +8,7 @@ from rest_framework.viewsets import GenericViewSet
 
 from .auth import CustomAuthentication
 from .models import Followers, Page, Tag
-from .serializers import PageSerializer, TagSerializer
+from .serializers import FollowersSerializer, PageSerializer, TagSerializer
 
 
 class PageViewSet(viewsets.ModelViewSet):
@@ -68,10 +68,9 @@ class PageViewSet(viewsets.ModelViewSet):
     def unfollow(self, request, pk=None):
         try:
             follow = Followers.objects.get(page_id_id=pk, user=request.user)
-        except Followers.DoesNotExist:
+        except Page.DoesNotExist:
             return Response(
-                {"error": "You're not follower of this page"},
-                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                {"error": "Page not found"}, status=status.HTTP_404_NOT_FOUND
             )
         try:
             follow.delete()
@@ -80,6 +79,21 @@ class PageViewSet(viewsets.ModelViewSet):
                 {"error": str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
         return Response({"message": "Unfollowed"}, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["get"])
+    def followers(self, request, pk=None):
+        try:
+            followers = Page.objects.get(id=pk).followers.all()
+        except Page.DoesNotExist:
+            return Response(
+                {"error": "You're not follower of this page"},
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+        serializer = FollowersSerializer(followers, many=True)
+        users = serializer.data
+        if users:
+            return Response(serializer.data)
+        return Response({"detail": "The list of users is empty"})
 
 
 class TagView(mixins.CreateModelMixin, mixins.ListModelMixin, GenericViewSet):
