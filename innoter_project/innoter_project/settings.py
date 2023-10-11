@@ -153,3 +153,5 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": datetime.timedelta(seconds=30),
     }
 }
+
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
