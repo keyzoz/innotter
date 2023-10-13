@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "page.apps.PageConfig",
     "post.apps.PostConfig",
     "rest_framework",
+    "celery",
 ]
 
 MIDDLEWARE = [
@@ -142,3 +143,13 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 USER_MANAG_URL = os.getenv("USER_MANAG_URL")
+
+
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
+
+CELERY_BEAT_SCHEDULE = {
+    "unblock-pages-daily": {
+        "task": "page.tasks.unblock_pages",
+        "schedule": datetime.timedelta(seconds=30),
+    }
+}
