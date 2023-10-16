@@ -1,3 +1,0 @@
-[tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "innoter_project.innoter_project.settings"
-python_files = ["test_*.py", "*_test.py", "tests/*.py"]
