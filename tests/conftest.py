@@ -63,3 +63,29 @@ def client():
 def generate_random_page_info():
 
     return {"name": fake.word(), "description": fake.text()}
+
+
+@pytest.fixture(scope="function")
+def generate_random_post_info():
+
+    return {"content": fake.text()}
+
+
+@pytest.fixture(scope="function")
+def generate_random_tag_info():
+
+    return {"name": fake.word()}
+
+
+@pytest.fixture
+def disable_pageviewset_permissions():
+    from rest_framework.permissions import AllowAny
+
+    from innoter_project.page.views import PageViewSet
+
+    original_permission_classes = PageViewSet.permission_classes
+    PageViewSet.permission_classes = [AllowAny]
+
+    yield
+
+    PageViewSet.permission_classes = original_permission_classes
