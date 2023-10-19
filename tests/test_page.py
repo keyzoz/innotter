@@ -1,5 +1,8 @@
 import pytest
+from page.models import Page
+from page.views import PageViewSet
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 
 
 @pytest.mark.urls("innoter_project.innoter_project.urls")
@@ -24,18 +27,16 @@ class TestPage:
         generate_random_page_info,
         disable_pageviewset_permissions,
     ):
+
         token = generate_fake_token
         data = generate_random_page_info
-        resp = client.post(
-            "/page/", headers={"Authorization": "Bearer {}".format(token)}, data=data
-        )
-        assert resp.status_code == status.HTTP_201_CREATED
-        data_from_resp = resp.json()
+        page = Page.objects.create(**data)
         delete_resp = client.delete(
-            f"/page/{data_from_resp['id']}/",
+            f"/page/{page.id}/",
             headers={"Authorization": "Bearer {}".format(token)},
         )
-        assert delete_resp.status_code == status.HTTP_200_OK
+        assert delete_resp.status_code == status.HTTP_204_NO_CONTENT
+        assert Page.objects.filter(id=page.id).first() is None
 
     def test_patch_page(self, client, generate_fake_token, generate_random_page_info):
         token = generate_fake_token
@@ -63,21 +64,16 @@ class TestPage:
     ):
         token = generate_fake_token
         data = generate_random_page_info
-        resp = client.post(
-            "/page/", headers={"Authorization": "Bearer {}".format(token)}, data=data
-        )
-        assert resp.status_code == status.HTTP_201_CREATED
-        data_from_resp = resp.json()
+        page = Page.objects.create(**data)
         follow_page = client.patch(
-            f"/page/{data_from_resp['id']}/follow/",
+            f"/page/{page.id}/follow/",
             headers={"Authorization": "Bearer {}".format(token)},
         )
         follow_data_from_resp = follow_page.json()
         assert follow_page.status_code == status.HTTP_201_CREATED
         assert follow_data_from_resp["message"] == "Followed"
-
         unfollow_page = client.patch(
-            f"/page/{data_from_resp['id']}/unfollow/",
+            f"/page/{page.id}/unfollow/",
             headers={"Authorization": "Bearer {}".format(token)},
         )
         unfollow_data_from_resp = unfollow_page.json()
@@ -94,19 +90,15 @@ class TestPage:
         token = generate_fake_token
         data = generate_random_page_info
         post_info = generate_random_post_info
-        resp = client.post(
-            "/page/", headers={"Authorization": "Bearer {}".format(token)}, data=data
-        )
-        assert resp.status_code == status.HTTP_201_CREATED
-        data_from_resp = resp.json()
+        page = Page.objects.create(**data)
         post_resp = client.post(
-            f"/page/{data_from_resp['id']}/post/",
+            f"/page/{page.id}/post/",
             headers={"Authorization": "Bearer {}".format(token)},
             data=post_info,
         )
         data_from_post_resp = post_resp.json()
         assert post_resp.status_code == status.HTTP_201_CREATED
-        assert data_from_post_resp["page"] == data_from_resp["name"]
+        assert data_from_post_resp["page"] == page.name
         assert data_from_post_resp["content"] == post_info["content"]
         assert data_from_post_resp["reply_to"] is None
         assert data_from_post_resp["likes"] == []
