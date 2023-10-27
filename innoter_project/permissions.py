@@ -1,7 +1,6 @@
 import requests
+from django.conf import settings
 from rest_framework.permissions import BasePermission
-
-from innoter_project import settings
 
 
 class IsAdminOrModeratorOfOwnerGroup(BasePermission):

@@ -4,8 +4,6 @@ import os
 
 from celery import Celery
 
-from . import settings
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "innoter_project.settings")
 
 app = Celery("innoter_project")

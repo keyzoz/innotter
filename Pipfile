@@ -16,6 +16,9 @@ requests = "*"
 urllib3 = "*"
 celery = "*"
 redis = "*"
+faker = "*"
+pytest-django = "*"
+pytz = "*"
 
 [dev-packages]
 
